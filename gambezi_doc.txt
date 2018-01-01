@@ -1,0 +1,525 @@
+################################################################################
+Gambezi Client Documentation
+################################################################################
+
+The Gambezi communication system is organized in a tree format. To use the
+client, create a Gambezi client object, and use the get_node methods in Gambezi
+and _Node to get and create nodes in the tree.
+
+NOTE: Do not modify any parameters of the root node. The root node is used for a
+heartbeat for monitoring the connection.
+
+================================================================================
+Commonly used methods
+================================================================================
+
+Gambezi Class
+* [Constructor] Gambezi(host_address, reconnect=true, reconnect_interval=5)
+* _Node get_node(string_key, delimiter='/', parent_node=null)
+
+_Node Class
+* _Node get_node(string_key, delimiter='/')
+* int set_double(value)
+* double get_double()
+* int set_boolean(value)
+* boolean get_boolean()
+* int set_string(value)
+* string get_string()
+
+================================================================================
+Gambezi Class Documentation
+================================================================================
+
+This class represents a connection to a single Gambezi server. This class can be
+instantiated directly.
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Constructors
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+--------------------------------------------------------------------------------
+Gambezi(host_address, reconnect, reconnect_interval)
+
+Constructs an instance of a Gambezi client.
+
+Parameters:
+* host_address [string]
+  - The host address does not include the protocol but the port number should be
+    included.
+  - Example: '10.5.5.26:5809'
+* reconnect [boolean] (default -> true)
+  - Determines if this Gambezi client should attempt to reconnect to the server
+    if a disconnection is detected.
+* reconnect_interval [double] {units -> seconds} (default -> 5)
+  - Determines how often this Gambezi client should check to see if it has been
+    disconnected. The heartbeat is sent at twice the rate specified by the
+    reconnect interval to account for network delays.
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Gambezi Callbacks
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+--------------------------------------------------------------------------------
+on_ready(event)
+
+This callback is called when the Gambezi client successfully connects to the
+server.
+
+Parameters:
+* event [object]
+  - The websocket connection event.
+
+Return value [None]
+
+--------------------------------------------------------------------------------
+on_error(event)
+
+This callback is called when there is an error somewhere.
+
+Parameters:
+* event [object OR string]
+  - The websocket error event or a string error message.
+
+Return value [None]
+
+--------------------------------------------------------------------------------
+on_close(event)
+
+This callback is called when the Gambezi client is closed.
+
+Parameters:
+* event [object]
+  - The websocket disconnection event.
+
+Return value [None]
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Gambezi Client Methods
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+--------------------------------------------------------------------------------
+open_connection()
+
+Opens the connection to the Gambezi server. This method does not normally need
+to be called directly since the constructor calls it.
+
+Return value [int]:
+- 0 -> Success
+- 1 -> Connection was already open
+
+--------------------------------------------------------------------------------
+close_connection()
+
+Closes the connection to the Gambezi server.
+
+Return value [None]
+
+--------------------------------------------------------------------------------
+get_ready()
+
+Returns whether this Gambezi client is ready to communicate or not. All methods
+called when the client is not ready will be queued to be called when the
+connection is made.
+
+Return value [boolean]:
+- false -> Not connected yet
+- true -> connected
+
+--------------------------------------------------------------------------------
+set_refresh_rate(refresh_rate)
+
+Sets the refresh rate of this client in milliseconds. This parameter determines
+what is the smallest unit of time that subscriptions can be specified to. The
+default refresh rate when a client is created is 100 milliseconds.
+
+Parameters:
+* refresh_rate [int] {units -> milliseconds}
+  - Determines the refresh rate of this Gambezi client.
+
+Return value [int]:
+- 0 -> Changes saved
+- 1 -> Changes queued to be applied later
+
+--------------------------------------------------------------------------------
+get_refresh_rate()
+
+Gets the current refresh rate of this client in milliseconds.
+
+Return value [int]:
+- The current refresh rate in milliseconds.
+
+--------------------------------------------------------------------------------
+set_default_subscription(default_subscription)
+
+Sets the default subscription rate for this client. Changes to this parameter
+are not applied retroactively to nodes. The default subscription when the client
+is created is 0x0001.
+
+Parameters:
+* default_subscription [int]
+  - Determines the default subscription for this client. See set_subscription in
+    _Node for how subscriptions work.
+
+Return value [None]
+
+--------------------------------------------------------------------------------
+get_default_subscription()
+
+Gets the default subscription rate for this client.
+
+Return value [int]:
+- The current default subscription rate.
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Tree information Methods
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+--------------------------------------------------------------------------------
+get_node(string_key, delimiter, parent_node)
+
+Gets the Node with the specified string key. It is preferred to leave the parent
+null and to use the get_node method in the _Node class instead if the child of
+a node is wanted.
+
+Parameters:
+* string_key [string OR array of strings]
+  - Determines the string key of the new node.
+  - If this parameter is an array of strings, each item in the array represents
+    one level down the tree.
+  - If this parameter is a single string, the string will be split using the
+    delimiter and the resulting array will be used.
+* delimiter [string] (default -> '/')
+  - The delimiter that the string will be split on if the string_key is a single
+    string
+* parent_node [_Node] (default -> null)
+  - The parent node that this new node will be referenced too. If the parent
+    node is null, the new node is referenced off of the root node
+
+Return value [_Node]:
+- The node described by the string key
+
+--------------------------------------------------------------------------------
+get_root_node()
+
+Returns the root node of the Gambezi instance. Be careful not to modify the
+subscription parameter.
+
+Return value [_Node]:
+- The root node of the Gambezi instance.
+
+================================================================================
+_Node Class Documentation
+================================================================================
+
+This class represents a Node within the Gambezi tree. Do not instantiate this
+class directly! Use the get_node methods within the Gambezi and _Node classes
+instead.
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Node Callbacks
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+--------------------------------------------------------------------------------
+on_ready(node)
+
+This callback is called when this node is ready to communicate.
+
+Parameters:
+* node [_Node]
+  - The node that is ready to communicate.
+
+Return value [None]
+
+--------------------------------------------------------------------------------
+on_update(node)
+
+This callback is called when this node's value has been updated by the server.
+
+Parameters:
+* node [_Node]
+  - The node that has been updated.
+
+Return value [None]
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Node information Methods
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+--------------------------------------------------------------------------------
+get_binary_key()
+
+Returns the binary key of this node in array form.
+
+Return value [array of ints]:
+- The binary key of this node. Each element represents one level of the tree.
+- The level closest to the root node is given first.
+- The last element may be (-1) if the node has not been initialized yet.
+
+--------------------------------------------------------------------------------
+get_id()
+
+Returns the ID of this node.
+
+Return value [int]:
+- (-1) -> This node is not ready to communicate yet
+- Else -> the ID of the node
+
+--------------------------------------------------------------------------------
+get_string_key()
+
+Returns the string key of this node in array form.
+
+Return value [array of strings]:
+- The string key of this node. Each element represents one level of the tree.
+- The level closest to the root node is given first.
+
+--------------------------------------------------------------------------------
+get_name()
+
+Returns the name of this node.
+
+Return value [string]:
+- The name of the node.
+
+--------------------------------------------------------------------------------
+get_parent()
+
+Returns the parent of this node.
+
+Return value [_Node]:
+- The parent of this node.
+- null is returned if the node is the root node.
+
+--------------------------------------------------------------------------------
+get_ready()
+
+Returns whether this node is ready to communicate or not. All methods called
+when the node is not ready will be queued to be called when the connection is
+made.
+
+Return value [boolean]:
+- false -> Not connected yet
+- true -> connected
+
+--------------------------------------------------------------------------------
+set_subscription(refresh_skip, set_children)
+
+Updates the subscription for this node. There are 2 special values of refresh
+skip possible.
+- 0x0000 -> the node values should be sent to this client as soon as it is
+            received
+- 0xFFFF -> unsubscribe from this node.
+- Else -> update the node at this time interval. The time interval is given in
+          multiples of the refresh rate of the Gambezi client.
+- Example: Gambezi refresh rate = 100ms.
+           Node refresh skip = 10.
+           The node will get updates every 1 second (10 x 100ms).
+
+If set children is true, all of the children of this particular node will be
+returned when when this node is updated. However, each child node can have its
+own subscription in addition to the parents' subscriptions.
+
+Parameters:
+* refresh_skip [int]
+  - The new subscription of this node
+* set_children [boolean] (default -> false)
+  - If all children of this node should be retrieved when this node is retrieved
+
+Return value [int]:
+- 0 -> Changes saved
+- 1 -> Changes queued to be applied later
+
+--------------------------------------------------------------------------------
+get_subscription()
+
+Gets the current subscription of this node.
+
+Return value [int]:
+- The current subscription of this node. See set_subscription in _Node for a
+  detailed description of this parameter.
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Tree information Methods
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+--------------------------------------------------------------------------------
+get_node(string_key, delimiter)
+
+Gets the Node with the specified string key. This method gets a child node of
+the calling node. For example, if the existing node has a string key of
+['a', 'b', 'c'] and string_key is equal to ['1', '2', '3'], the resulting node
+will have a string key of ['a', 'b', 'c', '1', '2', '3']. If a node referenced
+off of the root node is needed, use get_node in Gambezi.
+
+Parameters:
+* string_key [string OR array of strings]
+  - Determines the string key of the new node.
+  - If this parameter is an array of strings, each item in the array represents
+    one level down the tree.
+  - If this parameter is a single string, the string will be split using the
+    delimiter and the resulting array will be used.
+* delimiter [string] (default -> '/')
+  - The delimiter that the string will be split on if the string_key is a single
+    string
+
+Return value [_Node]:
+- The node described by the string key
+
+--------------------------------------------------------------------------------
+request_children()
+
+Retrieves all immediate children of this node from the server. The children that
+are retrieved can be accessed with get_children in _Node.
+
+Return value [int]:
+- 0 -> Request sent
+- 1 -> Request queued to be sent later
+
+--------------------------------------------------------------------------------
+request_all_children()
+
+Retrieves all children of this node from the server. The children that are
+retrieved can be accessed with get_children in _Node.
+
+Return value [int]:
+- 0 -> Request sent
+- 1 -> Request queued to be sent later
+
+--------------------------------------------------------------------------------
+get_children()
+
+Returns all children that are currently visible to this node. By default, only
+nodes that are explicitly retrieved with get_node are visible, and additional
+children created by other nodes must be retrieved with request_children() in
+_Node or request_all_children() in _Node.
+
+Return value [array of _Nodes]
+- An array of all children visible to this node are returned.
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Node information Methods
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+--------------------------------------------------------------------------------
+request_data()
+
+Requests an update of the data in this node from the server.
+
+Return value [int]:
+- 0 -> Request sent
+- 1 -> Request queued to be sent later
+
+--------------------------------------------------------------------------------
+set_data(data, offset, length)
+
+Sends an update of the data to the server in the form of a byte buffer.
+
+Parameters:
+* data [array of bytes]
+  - The data array to be sent
+* offset [int]
+  - The index of the first data byte in the array to be sent.
+* length [int]
+  - The number of bytes from the array to be sent.
+
+Return value [int]:
+- 0 -> Request sent
+- 1 -> Request queued to be sent later
+
+--------------------------------------------------------------------------------
+get_data()
+
+Gets the current data in this node in byte form. Note that this data may not
+necessarily match what is currently in the server depending on the update
+settings and the timing. However, with reasonable settings, the value will
+almost always be current.
+
+Return value [array of bytes]:
+- The current value value of the node as seen by this client.
+
+--------------------------------------------------------------------------------
+set_double(value)
+
+Sets the value of this node as a double (64 bit floating point number).
+
+Parameters:
+* value [double]
+  - The value to set this node to.
+
+Return value [int]:
+- 0 -> Request sent
+- 1 -> Request queued to be sent later
+
+--------------------------------------------------------------------------------
+get_double()
+
+Gets the value of this node as a double. Returns NaN if the data format is
+incorrect.
+
+Return value [double]:
+- The current value of this node as seen by the client.
+
+--------------------------------------------------------------------------------
+set_float(value)
+
+Sets the value of this node as a float (32 bit floating point number).
+
+Parameters:
+* value [float]
+  - The value to set this node to.
+
+Return value [int]:
+- 0 -> Request sent
+- 1 -> Request queued to be sent later
+
+--------------------------------------------------------------------------------
+get_float()
+
+Gets the value of this node as a float. Returns NaN if the data format is
+incorrect.
+
+Return value [float]:
+- The current value of this node as seen by the client.
+
+--------------------------------------------------------------------------------
+set_boolean(value)
+
+Sets the value of this node as a boolean.
+
+Parameters:
+* value [boolean]
+  - The value to set this node to.
+
+Return value [int]:
+- 0 -> Request sent
+- 1 -> Request queued to be sent later
+
+--------------------------------------------------------------------------------
+get_boolean()
+
+Gets the value of this node as a boolean. Returns false if the data format is
+incorrect.
+
+Return value [boolean]:
+- The current value of this node as seen by the client.
+
+--------------------------------------------------------------------------------
+set_string(value)
+
+Sets the value of this node as a string.
+
+Parameters:
+* value [string]
+  - The value to set this node to.
+
+Return value [int]:
+- 0 -> Request sent
+- 1 -> Request queued to be sent later
+
+--------------------------------------------------------------------------------
+get_string()
+
+Gets the value of this node as a string.
+
+Return value [string]:
+- The current value of this node as seen by the client.
