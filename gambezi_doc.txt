@@ -67,7 +67,8 @@ server.
 
 Parameters:
 * event [object]
-  - The websocket connection event.
+  - The websocket connection event OR the websocket itself depending on the
+    implementation.
 
 Return value [None]
 
@@ -89,7 +90,8 @@ This callback is called when the Gambezi client is closed.
 
 Parameters:
 * event [object]
-  - The websocket disconnection event.
+  - The websocket disconnection event OR the websocket itself depending on the
+    implementation.
 
 Return value [None]
 
